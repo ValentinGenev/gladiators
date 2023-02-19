@@ -1,23 +1,15 @@
 import Equipment from "../objects/Equipment"
-import Field from "../objects/Field"
+import FieldState from "../state/Field"
 import Gladiator from "../objects/Gladiator"
+import { getRandomNumber } from "../utilities/random-generator"
 
 export default class Staging {
     private level: number
-    private player: Gladiator
     private enemies: Gladiator[] = []
 
     constructor(level: number) {
         this.level = level
-
-        if (level === 1) {
-            this.setGladiatorPosition(1, 1, true)
-        }
         this.populateWithGladiators()
-    }
-
-    getPlayer() {
-        return this.player
     }
 
     getEnemies() {
@@ -26,34 +18,20 @@ export default class Staging {
 
     private populateWithGladiators() {
         for (let i = 0; i < this.level; i++) {
-            this.setGladiatorPosition(i + 1, i)
-            this.setGladiatorPosition(i, i + 1)
-            this.setGladiatorPosition(i + 1, i + 1)
+            this.setEnemyPosition(i + 1, i)
+            this.setEnemyPosition(i, i + 1)
+            this.setEnemyPosition(i + 1, i + 1)
         }
     }
 
-    private setGladiatorPosition(weapon: number, armor: number, isPlayer = false) {
-        const row = this.getRandomNumber(0, Field.getRows())
-        const column = this.getRandomNumber(0, Field.getColumns())
-
-        let tile
-        do {
-            tile = Field.getTile(row, column)
-        } while (tile.getContent());
-
+    private setEnemyPosition(weapon: number, armor: number) {
+        const row = getRandomNumber(0, FieldState.getRows())
+        const column = getRandomNumber(0, FieldState.getColumns())
+        const tile = FieldState.getFreeTile(row, column)
         const gladiator =
-            new Gladiator(new Equipment(weapon, armor), tile, isPlayer)
+            new Gladiator(new Equipment(weapon, armor), tile, false)
+
         tile.setContent(gladiator)
-
-        if (isPlayer) {
-            this.player = gladiator
-        }
-        else {
-            this.enemies.push(gladiator)
-        }
-    }
-
-    private getRandomNumber(min: number, max: number) {
-        return Math.floor(Math.random() * (max - min) + min)
+        this.enemies.push(gladiator)
     }
 }

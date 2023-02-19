@@ -1,9 +1,9 @@
-import Tile from "./Tile"
+import Tile from "../objects/Tile"
 
 const ROWS = 15;
 const COLUMNS = 15;
 
-export default class Field {
+export default class FieldState {
     private static rows: number = ROWS
     private static columns: number = COLUMNS
     private static field: Tile[][]
@@ -11,27 +11,36 @@ export default class Field {
     private constructor() { }
 
     public static getField() {
-        if (!Field.field) {
-            Field.field = this.create(this.rows, this.columns)
+        if (!FieldState.field) {
+            FieldState.field = this.create(this.rows, this.columns)
         }
 
-        return Field.field
+        return FieldState.field
     }
 
     static getRows() {
-        return Field.rows
+        return FieldState.rows
     }
 
     static getColumns() {
-        return Field.columns
+        return FieldState.columns
     }
 
     static getTile(row: number, column: number) {
         try {
-            return Field.getField()[row][column]
+            return FieldState.getField()[row][column]
         } catch (error) {
             return null
         }
+    }
+
+    static getFreeTile(row: number, column: number) {
+        let tile
+        do {
+            tile = FieldState.getTile(row, column)
+        } while (tile.getContent())
+
+        return tile
     }
 
     private static create(rowsCount: number, columnsCount: number) {

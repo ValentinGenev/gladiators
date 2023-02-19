@@ -13,12 +13,14 @@
   "scripts": {
     "build": "tsc && npm run build:browserify",
     "build:browserify": "browserify bin/index.js -o ./bundle.js",
+    "watch": "concurrently --kill-others \"npm run watch:tsc\" \"npm run watch:watchify\"",
     "watch:tsc": "tsc -w",
     "watch:watchify": "watchify ./bin/index.js -o ./bundle.js",
     "test": "test"
   },
   "devDependencies": {
     "browserify": "^17.0.0",
+    "concurrently": "^7.6.0",
     "typescript": "^4.9.5",
     "watchify": "^4.0.0"
   }

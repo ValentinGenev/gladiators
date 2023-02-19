@@ -40,19 +40,13 @@ exports["default"] = Fighting;
 },{}],2:[function(require,module,exports){
 "use strict";
 exports.__esModule = true;
-var Field_1 = require("../objects/Field");
-var KEY_VECTOR_MAP = {
-    ArrowUp: [-1, 0],
-    ArrowDown: [1, 0],
-    ArrowLeft: [0, -1],
-    ArrowRight: [0, 1]
-};
+var Field_1 = require("../state/Field");
 var Movement = (function () {
     function Movement() {
     }
-    Movement.detectControl = function (keyEvent) {
-        if (Object.keys(KEY_VECTOR_MAP).includes(keyEvent.key)) {
-            return KEY_VECTOR_MAP[keyEvent.key];
+    Movement.determineDirection = function (keyEvent) {
+        if (Object.keys(this.KEY_VECTOR_MAP).includes(keyEvent.key)) {
+            return this.KEY_VECTOR_MAP[keyEvent.key];
         }
         return [0, 0];
     };
@@ -66,76 +60,71 @@ var Movement = (function () {
             currentTile.setContent(null);
         }
     };
+    Movement.KEY_VECTOR_MAP = {
+        ArrowUp: [-1, 0],
+        ArrowDown: [1, 0],
+        ArrowLeft: [0, -1],
+        ArrowRight: [0, 1]
+    };
     return Movement;
 }());
 exports["default"] = Movement;
 
-},{"../objects/Field":6}],3:[function(require,module,exports){
+},{"../state/Field":8}],3:[function(require,module,exports){
 "use strict";
 exports.__esModule = true;
 var Equipment_1 = require("../objects/Equipment");
-var Field_1 = require("../objects/Field");
+var Field_1 = require("../state/Field");
 var Gladiator_1 = require("../objects/Gladiator");
+var random_generator_1 = require("../utilities/random-generator");
 var Staging = (function () {
     function Staging(level) {
         this.enemies = [];
         this.level = level;
-        if (level === 1) {
-            this.setGladiatorPosition(1, 1, true);
-        }
         this.populateWithGladiators();
     }
-    Staging.prototype.getPlayer = function () {
-        return this.player;
-    };
     Staging.prototype.getEnemies = function () {
         return this.enemies;
     };
     Staging.prototype.populateWithGladiators = function () {
         for (var i = 0; i < this.level; i++) {
-            this.setGladiatorPosition(i + 1, i);
-            this.setGladiatorPosition(i, i + 1);
-            this.setGladiatorPosition(i + 1, i + 1);
+            this.setEnemyPosition(i + 1, i);
+            this.setEnemyPosition(i, i + 1);
+            this.setEnemyPosition(i + 1, i + 1);
         }
     };
-    Staging.prototype.setGladiatorPosition = function (weapon, armor, isPlayer) {
-        if (isPlayer === void 0) { isPlayer = false; }
-        var row = this.getRandomNumber(0, Field_1["default"].getRows());
-        var column = this.getRandomNumber(0, Field_1["default"].getColumns());
-        var tile;
-        do {
-            tile = Field_1["default"].getTile(row, column);
-        } while (tile.getContent());
-        var gladiator = new Gladiator_1["default"](new Equipment_1["default"](weapon, armor), tile, isPlayer);
+    Staging.prototype.setEnemyPosition = function (weapon, armor) {
+        var row = (0, random_generator_1.getRandomNumber)(0, Field_1["default"].getRows());
+        var column = (0, random_generator_1.getRandomNumber)(0, Field_1["default"].getColumns());
+        var tile = Field_1["default"].getFreeTile(row, column);
+        var gladiator = new Gladiator_1["default"](new Equipment_1["default"](weapon, armor), tile, false);
         tile.setContent(gladiator);
-        if (isPlayer) {
-            this.player = gladiator;
-        }
-        else {
-            this.enemies.push(gladiator);
-        }
-    };
-    Staging.prototype.getRandomNumber = function (min, max) {
-        return Math.floor(Math.random() * (max - min) + min);
+        this.enemies.push(gladiator);
     };
     return Staging;
 }());
 exports["default"] = Staging;
 
-},{"../objects/Equipment":5,"../objects/Field":6,"../objects/Gladiator":7}],4:[function(require,module,exports){
+},{"../objects/Equipment":5,"../objects/Gladiator":6,"../state/Field":8,"../utilities/random-generator":10}],4:[function(require,module,exports){
 "use strict";
 exports.__esModule = true;
 var Staging_1 = require("./engine/Staging");
 var Movement_1 = require("./engine/Movement");
-var level1 = new Staging_1["default"](1);
-var player = level1.getPlayer();
-var enemies = level1.getEnemies();
+var Player_1 = require("./state/Player");
+startGame();
 document.onkeydown = function (event) {
-    var direction = Movement_1["default"].detectControl(event);
+    var player = Player_1["default"].get();
+    var direction = Movement_1["default"].determineDirection(event);
     Movement_1["default"].move(player, direction);
+    console.log('--------------- player', player.getTile());
 };
+function startGame() {
+    var level1 = new Staging_1["default"](1);
+    Player_1["default"].init();
+    var enemies = level1.getEnemies();
+}
 
-},{"./engine/Movement":2,"./engine/Staging":3}],5:[function(require,module,exports){
+},{"./engine/Movement":2,"./engine/Staging":3,"./state/Player":9}],5:[function(require,module,exports){
 "use strict";
 exports.__esModule = true;
 var Fighting_1 = require("../engine/Fighting");
@@ -185,51 +174,6 @@ exports["default"] = Equipment;
 
 },{"../engine/Fighting":1}],6:[function(require,module,exports){
 "use strict";
-exports.__esModule = true;
-var Tile_1 = require("./Tile");
-var ROWS = 15;
-var COLUMNS = 15;
-var Field = (function () {
-    function Field() {
-    }
-    Field.getField = function () {
-        if (!Field.field) {
-            Field.field = this.create(this.rows, this.columns);
-        }
-        return Field.field;
-    };
-    Field.getRows = function () {
-        return Field.rows;
-    };
-    Field.getColumns = function () {
-        return Field.columns;
-    };
-    Field.getTile = function (row, column) {
-        try {
-            return Field.getField()[row][column];
-        }
-        catch (error) {
-            return null;
-        }
-    };
-    Field.create = function (rowsCount, columnsCount) {
-        var field = new Array(rowsCount);
-        for (var row = 0; row < rowsCount; row++) {
-            field[row] = new Array(columnsCount);
-            for (var column = 0; column < columnsCount; column++) {
-                field[row][column] = new Tile_1["default"](row, column);
-            }
-        }
-        return field;
-    };
-    Field.rows = ROWS;
-    Field.columns = COLUMNS;
-    return Field;
-}());
-exports["default"] = Field;
-
-},{"./Tile":8}],7:[function(require,module,exports){
-"use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
         extendStatics = Object.setPrototypeOf ||
@@ -276,7 +220,7 @@ var Gladiator = (function (_super) {
 }(Fighting_1["default"]));
 exports["default"] = Gladiator;
 
-},{"../engine/Fighting":1}],8:[function(require,module,exports){
+},{"../engine/Fighting":1}],7:[function(require,module,exports){
 "use strict";
 exports.__esModule = true;
 var Tile = (function () {
@@ -294,5 +238,97 @@ var Tile = (function () {
     return Tile;
 }());
 exports["default"] = Tile;
+
+},{}],8:[function(require,module,exports){
+"use strict";
+exports.__esModule = true;
+var Tile_1 = require("../objects/Tile");
+var ROWS = 15;
+var COLUMNS = 15;
+var FieldState = (function () {
+    function FieldState() {
+    }
+    FieldState.getField = function () {
+        if (!FieldState.field) {
+            FieldState.field = this.create(this.rows, this.columns);
+        }
+        return FieldState.field;
+    };
+    FieldState.getRows = function () {
+        return FieldState.rows;
+    };
+    FieldState.getColumns = function () {
+        return FieldState.columns;
+    };
+    FieldState.getTile = function (row, column) {
+        try {
+            return FieldState.getField()[row][column];
+        }
+        catch (error) {
+            return null;
+        }
+    };
+    FieldState.getFreeTile = function (row, column) {
+        var tile;
+        do {
+            tile = FieldState.getTile(row, column);
+        } while (tile.getContent());
+        return tile;
+    };
+    FieldState.create = function (rowsCount, columnsCount) {
+        var field = new Array(rowsCount);
+        for (var row = 0; row < rowsCount; row++) {
+            field[row] = new Array(columnsCount);
+            for (var column = 0; column < columnsCount; column++) {
+                field[row][column] = new Tile_1["default"](row, column);
+            }
+        }
+        return field;
+    };
+    FieldState.rows = ROWS;
+    FieldState.columns = COLUMNS;
+    return FieldState;
+}());
+exports["default"] = FieldState;
+
+},{"../objects/Tile":7}],9:[function(require,module,exports){
+"use strict";
+exports.__esModule = true;
+var Equipment_1 = require("../objects/Equipment");
+var Field_1 = require("./Field");
+var Gladiator_1 = require("../objects/Gladiator");
+var random_generator_1 = require("../utilities/random-generator");
+var PlayerState = (function () {
+    function PlayerState() {
+    }
+    PlayerState.init = function () {
+        if (!PlayerState.state) {
+            PlayerState.state = PlayerState.create();
+        }
+    };
+    PlayerState.get = function () {
+        PlayerState.init();
+        return PlayerState.state;
+    };
+    PlayerState.create = function () {
+        var row = (0, random_generator_1.getRandomNumber)(0, Field_1["default"].getRows());
+        var column = (0, random_generator_1.getRandomNumber)(0, Field_1["default"].getColumns());
+        var tile = Field_1["default"].getFreeTile(row, column);
+        var gladiator = new Gladiator_1["default"](new Equipment_1["default"](1, 1), tile, false);
+        tile.setContent(gladiator);
+        return gladiator;
+    };
+    return PlayerState;
+}());
+exports["default"] = PlayerState;
+
+},{"../objects/Equipment":5,"../objects/Gladiator":6,"../utilities/random-generator":10,"./Field":8}],10:[function(require,module,exports){
+"use strict";
+exports.__esModule = true;
+exports.getRandomNumber = void 0;
+function getRandomNumber(min, max) {
+    return Math.floor(Math.random() * (max - min) + min);
+}
+exports.getRandomNumber = getRandomNumber;
 
 },{}]},{},[4]);

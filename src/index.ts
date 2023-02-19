@@ -1,13 +1,22 @@
 import Staging from "./engine/Staging"
 import Movement from "./engine/Movement"
+import PlayerState from "./state/Player"
 
-const level1 = new Staging(1)
-const player = level1.getPlayer()
-const enemies = level1.getEnemies()
+startGame()
 
 document.onkeydown = function (event: KeyboardEvent) {
-    const direction = Movement.detectControl(event)
+    const player = PlayerState.get()
+    const direction = Movement.determineDirection(event)
     Movement.move(player, direction)
+    // enemies.forEach(enemy => Movement.move(enemy, direction))
+
+    console.log('--------------- player', player.getTile())
+}
+
+function startGame() {
+    const level1 = new Staging(1)
+    PlayerState.init();
+    const enemies = level1.getEnemies()
 }
 
 // TODO: every time the players moves all warriors move

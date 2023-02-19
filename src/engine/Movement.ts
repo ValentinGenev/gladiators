@@ -1,25 +1,25 @@
 import FieldObject from "../interfaces/FieldObject"
-import Field from "../objects/Field"
-
-const KEY_VECTOR_MAP: Record<string, number[]> = {
-    ArrowUp: [-1, 0],
-    ArrowDown: [1, 0],
-    ArrowLeft: [0, -1],
-    ArrowRight: [0, 1]
-}
+import FieldState from "../state/Field"
 
 export default class Movement {
-    static detectControl(keyEvent: KeyboardEvent) {
-        if (Object.keys(KEY_VECTOR_MAP).includes(keyEvent.key)) {
-            return KEY_VECTOR_MAP[keyEvent.key]
+    static KEY_VECTOR_MAP: Record<string, number[]> = {
+        ArrowUp: [-1, 0],
+        ArrowDown: [1, 0],
+        ArrowLeft: [0, -1],
+        ArrowRight: [0, 1]
+    }
+
+    static determineDirection(keyEvent: KeyboardEvent) {
+        if (Object.keys(this.KEY_VECTOR_MAP).includes(keyEvent.key)) {
+            return this.KEY_VECTOR_MAP[keyEvent.key]
         }
-        return [0 ,0]
+        return [0, 0]
     }
 
     static move(object: FieldObject, direction: number[]) {
         const { row: currentRow, column: currentColumn } = object.getTile();
-        const currentTile = Field.getTile(currentRow, currentColumn)
-        const targetTile = Field.getTile(currentRow + direction[0], currentColumn + direction[1])
+        const currentTile = FieldState.getTile(currentRow, currentColumn)
+        const targetTile = FieldState.getTile(currentRow + direction[0], currentColumn + direction[1])
 
         if (targetTile) {
             targetTile.setContent(object)
