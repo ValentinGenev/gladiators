@@ -1,7 +1,6 @@
 import Equipment from "../objects/Equipment"
 import FieldState from "../state/Field"
 import Gladiator from "../objects/Gladiator"
-import { getRandomNumber } from "../utilities/random-generator"
 
 export default class Staging {
     private level: number
@@ -25,11 +24,9 @@ export default class Staging {
     }
 
     private setEnemyPosition(weapon: number, armor: number) {
-        const row = getRandomNumber(0, FieldState.getRows())
-        const column = getRandomNumber(0, FieldState.getColumns())
-        const tile = FieldState.getFreeTile(row, column)
+        const tile = FieldState.getRandomFreeTile()
         const gladiator =
-            new Gladiator(new Equipment(weapon, armor), tile, false)
+            new Gladiator(new Equipment(weapon, armor), tile)
 
         tile.setContent(gladiator)
         this.enemies.push(gladiator)

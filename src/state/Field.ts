@@ -1,4 +1,5 @@
 import Tile from "../objects/Tile"
+import { getRandomNumber } from "../utilities/random-generator";
 
 const ROWS = 15;
 const COLUMNS = 15;
@@ -34,9 +35,11 @@ export default class FieldState {
         }
     }
 
-    static getFreeTile(row: number, column: number) {
+    static getRandomFreeTile() {
         let tile
         do {
+            const row = getRandomNumber(0, FieldState.getRows())
+            const column = getRandomNumber(0, FieldState.getColumns())
             tile = FieldState.getTile(row, column)
         } while (tile.getContent())
 

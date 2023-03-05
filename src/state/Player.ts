@@ -1,7 +1,6 @@
 import Equipment from "../objects/Equipment";
 import FieldState from "./Field";
 import Gladiator from "../objects/Gladiator";
-import { getRandomNumber } from "../utilities/random-generator";
 
 export default class PlayerState {
     private static state: Gladiator
@@ -20,11 +19,9 @@ export default class PlayerState {
     }
 
     private static create() {
-        const row = getRandomNumber(0, FieldState.getRows())
-        const column = getRandomNumber(0, FieldState.getColumns())
-        const tile = FieldState.getFreeTile(row, column)
+        const tile = FieldState.getRandomFreeTile()
         const gladiator =
-            new Gladiator(new Equipment(1, 1), tile, false)
+            new Gladiator(new Equipment(1, 1), tile, true)
 
         tile.setContent(gladiator)
 

@@ -40,7 +40,9 @@ exports["default"] = Fighting;
 },{}],2:[function(require,module,exports){
 "use strict";
 exports.__esModule = true;
+var Gladiator_1 = require("../objects/Gladiator");
 var Field_1 = require("../state/Field");
+var Player_1 = require("../state/Player");
 var Movement = (function () {
     function Movement() {
     }
@@ -55,6 +57,11 @@ var Movement = (function () {
         var currentTile = Field_1["default"].getTile(currentRow, currentColumn);
         var targetTile = Field_1["default"].getTile(currentRow + direction[0], currentColumn + direction[1]);
         if (targetTile) {
+            var tileContent = targetTile.getContent();
+            if (targetTile.getContent() instanceof Gladiator_1["default"]) {
+                Player_1["default"].get().fight(tileContent);
+                console.log('--------------- outcome', Player_1["default"].get().fight(tileContent));
+            }
             targetTile.setContent(object);
             object.setTile(targetTile);
             currentTile.setContent(null);
@@ -70,13 +77,12 @@ var Movement = (function () {
 }());
 exports["default"] = Movement;
 
-},{"../state/Field":8}],3:[function(require,module,exports){
+},{"../objects/Gladiator":6,"../state/Field":10,"../state/Player":11}],3:[function(require,module,exports){
 "use strict";
 exports.__esModule = true;
 var Equipment_1 = require("../objects/Equipment");
 var Field_1 = require("../state/Field");
 var Gladiator_1 = require("../objects/Gladiator");
-var random_generator_1 = require("../utilities/random-generator");
 var Staging = (function () {
     function Staging(level) {
         this.enemies = [];
@@ -94,10 +100,8 @@ var Staging = (function () {
         }
     };
     Staging.prototype.setEnemyPosition = function (weapon, armor) {
-        var row = (0, random_generator_1.getRandomNumber)(0, Field_1["default"].getRows());
-        var column = (0, random_generator_1.getRandomNumber)(0, Field_1["default"].getColumns());
-        var tile = Field_1["default"].getFreeTile(row, column);
-        var gladiator = new Gladiator_1["default"](new Equipment_1["default"](weapon, armor), tile, false);
+        var tile = Field_1["default"].getRandomFreeTile();
+        var gladiator = new Gladiator_1["default"](new Equipment_1["default"](weapon, armor), tile);
         tile.setContent(gladiator);
         this.enemies.push(gladiator);
     };
@@ -105,26 +109,28 @@ var Staging = (function () {
 }());
 exports["default"] = Staging;
 
-},{"../objects/Equipment":5,"../objects/Gladiator":6,"../state/Field":8,"../utilities/random-generator":10}],4:[function(require,module,exports){
+},{"../objects/Equipment":5,"../objects/Gladiator":6,"../state/Field":10}],4:[function(require,module,exports){
 "use strict";
 exports.__esModule = true;
 var Staging_1 = require("./engine/Staging");
 var Movement_1 = require("./engine/Movement");
 var Player_1 = require("./state/Player");
+var Loader_1 = require("./render/Loader");
 startGame();
 document.onkeydown = function (event) {
     var player = Player_1["default"].get();
     var direction = Movement_1["default"].determineDirection(event);
     Movement_1["default"].move(player, direction);
-    console.log('--------------- player', player.getTile());
+    (0, Loader_1.renderGame)();
 };
 function startGame() {
     var level1 = new Staging_1["default"](1);
     Player_1["default"].init();
     var enemies = level1.getEnemies();
+    (0, Loader_1.renderGame)();
 }
 
-},{"./engine/Movement":2,"./engine/Staging":3,"./state/Player":9}],5:[function(require,module,exports){
+},{"./engine/Movement":2,"./engine/Staging":3,"./render/Loader":9,"./state/Player":11}],5:[function(require,module,exports){
 "use strict";
 exports.__esModule = true;
 var Fighting_1 = require("../engine/Fighting");
@@ -242,7 +248,72 @@ exports["default"] = Tile;
 },{}],8:[function(require,module,exports){
 "use strict";
 exports.__esModule = true;
+exports.getTileType = exports.createTile = exports.createField = void 0;
+var Gladiator_1 = require("../objects/Gladiator");
+var Field_1 = require("../state/Field");
+function createField() {
+    var field = document.createElement('div');
+    field.className = 'field';
+    field.style.gridTemplateColumns =
+        "repeat(".concat(Field_1["default"].getColumns(), ", min-content)");
+    field.style.gridTemplateRows =
+        "repeat(".concat(Field_1["default"].getRows(), ", min-content)");
+    return field;
+}
+exports.createField = createField;
+function createTile(x, y) {
+    var tile = document.createElement('div');
+    tile.className = "tile x-".concat(x, " y-").concat(y);
+    tile.classList.add(getTileType(Field_1["default"].getTile(y, x)));
+    return tile;
+}
+exports.createTile = createTile;
+function getTileType(tile) {
+    var tileContent = tile.getContent();
+    if (tileContent instanceof Gladiator_1["default"]) {
+        if (tileContent.checkIfDead()) {
+            return 'dead';
+        }
+        if (tileContent.checkIfPlayer()) {
+            return 'player';
+        }
+        return 'enemy';
+    }
+    return 'empty';
+}
+exports.getTileType = getTileType;
+
+},{"../objects/Gladiator":6,"../state/Field":10}],9:[function(require,module,exports){
+"use strict";
+exports.__esModule = true;
+exports.loadField = exports.renderGame = void 0;
+var Field_1 = require("../state/Field");
+var Field_2 = require("./Field");
+function renderGame() {
+    var gameContainer = document.querySelector('#game-container');
+    if (gameContainer.innerHTML) {
+        gameContainer.innerHTML = '';
+    }
+    gameContainer.append(loadField());
+}
+exports.renderGame = renderGame;
+function loadField() {
+    var field = Field_1["default"].getField();
+    var fieldElement = (0, Field_2.createField)();
+    for (var y = 0; y < field.length; y++) {
+        for (var x = 0; x < field[y].length; x++) {
+            fieldElement.append((0, Field_2.createTile)(x, y));
+        }
+    }
+    return fieldElement;
+}
+exports.loadField = loadField;
+
+},{"../state/Field":10,"./Field":8}],10:[function(require,module,exports){
+"use strict";
+exports.__esModule = true;
 var Tile_1 = require("../objects/Tile");
+var random_generator_1 = require("../utilities/random-generator");
 var ROWS = 15;
 var COLUMNS = 15;
 var FieldState = (function () {
@@ -268,9 +339,11 @@ var FieldState = (function () {
             return null;
         }
     };
-    FieldState.getFreeTile = function (row, column) {
+    FieldState.getRandomFreeTile = function () {
         var tile;
         do {
+            var row = (0, random_generator_1.getRandomNumber)(0, FieldState.getRows());
+            var column = (0, random_generator_1.getRandomNumber)(0, FieldState.getColumns());
             tile = FieldState.getTile(row, column);
         } while (tile.getContent());
         return tile;
@@ -291,13 +364,12 @@ var FieldState = (function () {
 }());
 exports["default"] = FieldState;
 
-},{"../objects/Tile":7}],9:[function(require,module,exports){
+},{"../objects/Tile":7,"../utilities/random-generator":12}],11:[function(require,module,exports){
 "use strict";
 exports.__esModule = true;
 var Equipment_1 = require("../objects/Equipment");
 var Field_1 = require("./Field");
 var Gladiator_1 = require("../objects/Gladiator");
-var random_generator_1 = require("../utilities/random-generator");
 var PlayerState = (function () {
     function PlayerState() {
     }
@@ -311,10 +383,8 @@ var PlayerState = (function () {
         return PlayerState.state;
     };
     PlayerState.create = function () {
-        var row = (0, random_generator_1.getRandomNumber)(0, Field_1["default"].getRows());
-        var column = (0, random_generator_1.getRandomNumber)(0, Field_1["default"].getColumns());
-        var tile = Field_1["default"].getFreeTile(row, column);
-        var gladiator = new Gladiator_1["default"](new Equipment_1["default"](1, 1), tile, false);
+        var tile = Field_1["default"].getRandomFreeTile();
+        var gladiator = new Gladiator_1["default"](new Equipment_1["default"](1, 1), tile, true);
         tile.setContent(gladiator);
         return gladiator;
     };
@@ -322,7 +392,7 @@ var PlayerState = (function () {
 }());
 exports["default"] = PlayerState;
 
-},{"../objects/Equipment":5,"../objects/Gladiator":6,"../utilities/random-generator":10,"./Field":8}],10:[function(require,module,exports){
+},{"../objects/Equipment":5,"../objects/Gladiator":6,"./Field":10}],12:[function(require,module,exports){
 "use strict";
 exports.__esModule = true;
 exports.getRandomNumber = void 0;

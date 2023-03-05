@@ -1,0 +1,21 @@
+.field {
+    display: grid;
+    gap: 2px;
+}
+
+.tile {
+    width: 30px;
+    height: 30px;
+}
+.tile.empty {
+    background-color: lightgrey;
+}
+.tile.player {
+    background-color: blue;
+}
+.tile.enemy {
+    background-color: red;
+}
+.tile.dead {
+    background-color: black;
+}

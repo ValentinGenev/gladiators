@@ -1,5 +1,7 @@
 import FieldObject from "../interfaces/FieldObject"
+import Gladiator from "../objects/Gladiator"
 import FieldState from "../state/Field"
+import PlayerState from "../state/Player"
 
 export default class Movement {
     static KEY_VECTOR_MAP: Record<string, number[]> = {
@@ -19,9 +21,16 @@ export default class Movement {
     static move(object: FieldObject, direction: number[]) {
         const { row: currentRow, column: currentColumn } = object.getTile();
         const currentTile = FieldState.getTile(currentRow, currentColumn)
-        const targetTile = FieldState.getTile(currentRow + direction[0], currentColumn + direction[1])
+        const targetTile = FieldState.getTile(currentRow + direction[0],
+            currentColumn + direction[1])
 
         if (targetTile) {
+            const tileContent = targetTile.getContent()
+            if (targetTile.getContent() instanceof Gladiator) {
+                PlayerState.get().fight(tileContent as Gladiator)
+                console.log('--------------- outcome', PlayerState.get().fight(tileContent as Gladiator))
+            }
+            // FIXME: check for a fight
             targetTile.setContent(object)
             object.setTile(targetTile)
             currentTile.setContent(null)
