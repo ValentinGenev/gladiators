@@ -27,4 +27,5 @@ function startGame() {
 // TODO: one fight takes one move
 // TODO: after 5 sec enemies move weather the player has moved or not
 // TODO: if weaker enemies reach the opposite border move in a random direction
+// TODO: consider range of one square to the attacks
 // maintain direction until cornered
